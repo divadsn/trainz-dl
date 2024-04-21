@@ -76,10 +76,10 @@ def get_application() -> FastAPI:
         assets = Asset.all()
 
         if revision is not None:
-            assets = Asset.filter(revision__gte=revision)
+            assets = Asset.filter(revision__gt=revision)
 
         if last_update is not None:
-            assets = Asset.filter(last_update__gte=last_update)
+            assets = Asset.filter(last_update__gt=last_update)
 
         assets = await assets.order_by("username")
         return [AssetSchema.model_validate(asset) for asset in assets]
