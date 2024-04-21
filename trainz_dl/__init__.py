@@ -13,11 +13,11 @@ from trainz_dl.config import settings
 class Asset(Model):
     id = fields.IntField(pk=True)
     username = fields.CharField(max_length=255, null=False)
-    kuid = fields.CharField(max_length=255, null=False)
+    kuid = fields.CharField(max_length=255, index=True, unique=True, null=False)
     sha1 = fields.CharField(max_length=40, null=False)
-    file_id = fields.CharField(max_length=32, null=False)
+    file_id = fields.CharField(max_length=32, index=True, unique=True, null=False)
     revision = fields.IntField(null=False)
-    last_update = fields.DatetimeField(null=False, auto_now=True)
+    last_update = fields.DatetimeField(null=False, auto_now_add=True)
 
     def __str__(self):
         return f"{self.username} <{self.kuid}>"
