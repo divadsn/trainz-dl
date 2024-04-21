@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi import FastAPI, APIRouter, Path, HTTPException, Request
 from pydantic import BaseModel
 
 from tortoise import Tortoise, connections, fields
@@ -85,7 +85,7 @@ def get_application() -> FastAPI:
         return [AssetSchema.model_validate(asset) for asset in assets]
 
     @router.get("/assets/by-kuid/{kuid}")
-    async def get_asset_by_kuid(kuid: str) -> AssetSchema:
+    async def get_asset_by_kuid(kuid: str = Path(regex=r"^(?:kuid:\d+:\d+|kuid2:\d+:\d+:\d+)$")) -> AssetSchema:
         asset = await Asset.get_or_none(kuid=kuid)
 
         if asset is None:
@@ -94,7 +94,7 @@ def get_application() -> FastAPI:
         return AssetSchema.model_validate(asset)
 
     @router.get("/assets/by-file/{file_id}")
-    async def get_asset_by_file(file_id: str) -> AssetSchema:
+    async def get_asset_by_file(file_id: str = Path(min_length=32, max_length=32)) -> AssetSchema:
         asset = await Asset.get_or_none(file_id=file_id)
 
         if asset is None:
