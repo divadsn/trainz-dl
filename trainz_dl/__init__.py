@@ -85,7 +85,7 @@ def get_application() -> FastAPI:
         return [AssetSchema.model_validate(asset) for asset in assets]
 
     @router.get("/assets/by-kuid/{kuid}")
-    async def get_asset_by_kuid(kuid: str = Path(regex=r"^(?:kuid:\d+:\d+|kuid2:\d+:\d+:\d+)$")) -> AssetSchema:
+    async def get_asset_by_kuid(kuid: str = Path(regex=r"^(?:kuid:-?\d+:\d+|kuid2:-?\d+:\d+:\d+)$")) -> AssetSchema:
         asset = await Asset.get_or_none(kuid=kuid)
 
         if asset is None:
