@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, Path, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 
@@ -84,6 +86,14 @@ def get_application() -> FastAPI:
         docs_url="/docs/",
         redoc_url="/redoc/",
         openapi_url="/api/openapi.json",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.middleware("http")
