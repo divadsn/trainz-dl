@@ -1,8 +1,11 @@
+import os
+
 from datetime import datetime
 from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, Path, HTTPException, Request
 from pydantic import BaseModel
+from pydantic.alias_generators import to_camel
 
 from tortoise import Tortoise, connections, fields
 from tortoise.models import Model
@@ -35,6 +38,37 @@ class AssetSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AssetDetailsSchema(BaseModel):
+    total: int
+    full_bytes: int
+    full_human: str
+    low_bytes: int
+    low_human: str
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+
+
+def get_size(start_path: str = '.') -> int:
+    total_size = 0
+    for root_path, dirs, files in os.walk(start_path):
+        for f in files:
+            file_path = os.path.join(root_path, f)
+
+            # skip if it is symbolic link
+            if not os.path.islink(file_path):
+                total_size += os.path.getsize(file_path)
+
+    return total_size
+
+
+def readable_size(size: int) -> str:
+    units = ('KB', 'MB', 'GB', 'TB')
+    size_list = [f'{int(size):,} B'] + [f'{int(size) / 1024 ** (i + 1):,.1f} {u}' for i, u in enumerate(units)]
+    return [size for size in size_list if not size.startswith('0.')][-1]
 
 
 def get_application() -> FastAPI:
@@ -101,6 +135,22 @@ def get_application() -> FastAPI:
             raise HTTPException(status_code=404, detail="Asset not found")
 
         return AssetSchema.model_validate(asset)
+
+    @router.get("/assets/details")
+    async def get_assets_details() -> AssetDetailsSchema:
+        total = await Asset.all().count()
+
+        # Calculate total sizes
+        full_bytes = get_size("/var/www/html/assets")
+        low_bytes = get_size("/var/www/html/assets_low")
+
+        return AssetDetailsSchema(
+            total=total,
+            full_bytes=full_bytes,
+            full_human=readable_size(full_bytes),
+            low_bytes=low_bytes,
+            low_human=readable_size(low_bytes),
+        )
 
     app.include_router(router)
     return app
