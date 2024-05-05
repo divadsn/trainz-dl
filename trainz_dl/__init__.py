@@ -43,7 +43,7 @@ class AssetSchema(BaseModel):
 
 
 class AssetDetailsSchema(BaseModel):
-    total: int
+    latest_revision: int
     full_bytes: int
     full_human: str
     low_bytes: int
@@ -148,14 +148,14 @@ def get_application() -> FastAPI:
 
     @router.get("/assets/details")
     async def get_assets_details() -> AssetDetailsSchema:
-        total = await Asset.all().count()
+        latest_asset = await Asset.all().order_by("-revision").first()
 
         # Calculate total sizes
         full_bytes = get_size("/var/www/html/assets")
         low_bytes = get_size("/var/www/html/assets_low")
 
         return AssetDetailsSchema(
-            total=total,
+            latest_revision=latest_asset.revision,
             full_bytes=full_bytes,
             full_human=readable_size(full_bytes),
             low_bytes=low_bytes,
