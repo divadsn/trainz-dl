@@ -40,7 +40,7 @@ class AssetSchema(BaseModel):
 
     class Config:
         alias_generator = to_camel
-        from_attributes = True
+        populate_by_name = True
 
 
 class AssetsResponseSchema(BaseModel):
@@ -139,7 +139,7 @@ def get_application() -> FastAPI:
         last_revision = max(assets, key=lambda h: h.revision).revision if assets else revision
 
         return AssetsResponseSchema(
-            assets=[AssetSchema.model_validate(asset) for asset in assets],
+            assets=[AssetSchema.model_validate(asset, from_attributes=True) for asset in assets],
             last_revision=last_revision,
         )
 
