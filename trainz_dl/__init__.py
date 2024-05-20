@@ -39,7 +39,17 @@ class AssetSchema(BaseModel):
     revision: int
 
     class Config:
+        alias_generator = to_camel
         from_attributes = True
+
+
+class AssetsResponseSchema(BaseModel):
+    assets: List[AssetSchema]
+    last_revision: int
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 
 class AssetDetailsSchema(BaseModel):
@@ -116,7 +126,7 @@ def get_application() -> FastAPI:
     router = APIRouter(prefix="/api", tags=["assets"])
 
     @router.get("/assets.json")
-    async def get_assets(revision: Optional[int] = None, last_update: Optional[datetime] = None) -> List[AssetSchema]:
+    async def get_assets(revision: Optional[int] = None, last_update: Optional[datetime] = None) -> AssetsResponseSchema:
         assets = Asset.all()
 
         if revision is not None:
@@ -126,7 +136,12 @@ def get_application() -> FastAPI:
             assets = Asset.filter(last_update__gt=last_update)
 
         assets = await assets.order_by("username")
-        return [AssetSchema.model_validate(asset) for asset in assets]
+        last_revision = max(assets, key=lambda h: h.revision).revision if assets else revision
+
+        return AssetsResponseSchema(
+            assets=[AssetSchema.model_validate(asset) for asset in assets],
+            last_revision=last_revision,
+        )
 
     @router.get("/assets/by-kuid/{kuid}")
     async def get_asset_by_kuid(kuid: str = Path(regex=r"^(?:kuid:-?\d+:\d+|kuid2:-?\d+:\d+:\d+)$")) -> AssetSchema:
