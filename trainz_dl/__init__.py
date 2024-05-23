@@ -53,7 +53,6 @@ class AssetsResponseSchema(BaseModel):
 
 
 class AssetDetailsSchema(BaseModel):
-    latest_revision: int
     full_bytes: int
     full_human: str
     low_bytes: int
@@ -150,7 +149,7 @@ def get_application() -> FastAPI:
         if asset is None:
             raise HTTPException(status_code=404, detail="Asset not found")
 
-        return AssetSchema.model_validate(asset)
+        return AssetSchema.model_validate(asset, from_attributes=True)
 
     @router.get("/assets/by-file/{file_id}")
     async def get_asset_by_file(file_id: str = Path(min_length=32, max_length=32)) -> AssetSchema:
@@ -159,18 +158,14 @@ def get_application() -> FastAPI:
         if asset is None:
             raise HTTPException(status_code=404, detail="Asset not found")
 
-        return AssetSchema.model_validate(asset)
+        return AssetSchema.model_validate(asset, from_attributes=True)
 
     @router.get("/assets/details")
     async def get_assets_details() -> AssetDetailsSchema:
-        latest_asset = await Asset.all().order_by("-revision").first()
-
-        # Calculate total sizes
         full_bytes = get_size("/var/www/html/assets")
         low_bytes = get_size("/var/www/html/assets_low")
 
         return AssetDetailsSchema(
-            latest_revision=latest_asset.revision,
             full_bytes=full_bytes,
             full_human=readable_size(full_bytes),
             low_bytes=low_bytes,
