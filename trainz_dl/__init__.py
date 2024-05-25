@@ -53,6 +53,7 @@ class AssetsResponseSchema(BaseModel):
 
 
 class AssetDetailsSchema(BaseModel):
+    current_revision: int
     full_bytes: int
     full_human: str
     low_bytes: int
@@ -162,10 +163,14 @@ def get_application() -> FastAPI:
 
     @router.get("/assets/details")
     async def get_assets_details() -> AssetDetailsSchema:
+        newest_asset = await Asset.all().order_by("-revision").first()
+
+        # Calculate the size of the assets folder
         full_bytes = get_size("/var/www/html/assets")
         low_bytes = get_size("/var/www/html/assets_low")
 
         return AssetDetailsSchema(
+            current_revision=newest_asset.revision,
             full_bytes=full_bytes,
             full_human=readable_size(full_bytes),
             low_bytes=low_bytes,
