@@ -6,6 +6,10 @@ from typing import List, Optional
 from fastapi import FastAPI, APIRouter, Path, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
+
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 
@@ -117,6 +121,7 @@ def get_application() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
+        FastAPICache.init(InMemoryBackend())
         await Tortoise.init(db_url=settings.db_url, modules={"models": ["trainz_dl"]})
 
     @app.on_event("shutdown")
@@ -126,6 +131,7 @@ def get_application() -> FastAPI:
     router = APIRouter(prefix="/api", tags=["assets"])
 
     @router.get("/assets.json")
+    @cache(namespace="assets", expire=5*60)
     async def get_assets(revision: Optional[int] = None, last_update: Optional[datetime] = None) -> AssetsResponseSchema:
         assets = Asset.all()
 
@@ -162,15 +168,16 @@ def get_application() -> FastAPI:
         return AssetSchema.model_validate(asset, from_attributes=True)
 
     @router.get("/assets/details")
+    @cache(namespace="assets-details", expire=5*60)
     async def get_assets_details() -> AssetDetailsSchema:
-        newest_asset = await Asset.all().order_by("-revision").first()
+        latest_asset = await Asset.all().order_by("-revision").first()
 
         # Calculate the size of the assets folder
         full_bytes = get_size("/var/www/html/assets")
         low_bytes = get_size("/var/www/html/assets_low")
 
         return AssetDetailsSchema(
-            current_revision=newest_asset.revision,
+            current_revision=latest_asset.revision,
             full_bytes=full_bytes,
             full_human=readable_size(full_bytes),
             low_bytes=low_bytes,

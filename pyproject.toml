@@ -7,10 +7,11 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.110.2"
-pydantic = "^2.6.2"
+fastapi = "^0.111.0"
+fastapi-cache2 = "^0.2.1"
+pydantic = "^2.7.1"
 pydantic-settings = "^2.2.1"
-tortoise-orm = {extras = ["asyncpg"], version = "^0.20.0"}
+tortoise-orm = {extras = ["asyncpg"], version = "^0.21.1"}
 uvicorn = "^0.29.0"
 
 
