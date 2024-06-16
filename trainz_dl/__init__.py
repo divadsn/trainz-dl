@@ -173,8 +173,8 @@ def get_application() -> FastAPI:
         latest_asset = await Asset.all().order_by("-revision").first()
 
         # Calculate the size of the assets folder
-        full_bytes = get_size("/var/www/html/assets")
-        low_bytes = get_size("/var/www/html/assets_low")
+        full_bytes = get_size("/var/www/html/assets/full")
+        low_bytes = get_size("/var/www/html/assets/low")
 
         return AssetDetailsSchema(
             current_revision=latest_asset.revision,
