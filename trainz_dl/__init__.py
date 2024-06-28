@@ -5,7 +5,6 @@ from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, Path, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from fastapi_cache.decorator import cache
@@ -142,11 +141,13 @@ def get_application() -> FastAPI:
             assets = Asset.filter(last_update__gt=last_update)
 
         assets = await assets.order_by("username")
-        last_revision = max(assets, key=lambda h: h.revision).revision if assets else revision
+
+        if not assets:
+            raise HTTPException(status_code=404, detail="No assets found")
 
         return AssetsResponseSchema(
             assets=[AssetSchema.model_validate(asset, from_attributes=True) for asset in assets],
-            last_revision=last_revision,
+            last_revision=max(assets, key=lambda h: h.revision).revision,
         )
 
     @router.get("/assets/by-kuid/{kuid}")
